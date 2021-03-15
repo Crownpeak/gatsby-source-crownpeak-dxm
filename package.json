@@ -1,0 +1,24 @@
+{
+  "name": "gatsby-source-crownpeak-dxm",
+  "version": "1.0.0",
+  "description": "Gatsby Source Plugin for Crownpeak DXM.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build script setup\""
+  },
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin",
+    "crownpeak",
+    "crownpeak-dxm",
+    "react",
+    "single-page-application"
+  ],
+  "author": "Crownpeak Technology, inc.",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.1"
+  }
+}
