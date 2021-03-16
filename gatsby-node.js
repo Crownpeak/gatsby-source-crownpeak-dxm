@@ -11,7 +11,7 @@ exports.createPages = async ({ graphql, actions }) => {
     //console.log(`Creating pages`);
     for (let page of pages) {
         //console.log(`Page is of type ${page.type}`);
-        const contentType = contentTypesOptions.find(ct => ct.nodeType === page.type)
+        const contentType = contentTypesOptions.find(ct => ct.nodeType === page.type && ct.template);
         if (contentType && page.slug) {
             //console.log(`Creating page for ${page.slug}`);
             createPage({
