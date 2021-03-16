@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-crownpeak-dxm",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Gatsby Source Plugin for Crownpeak DXM.",
   "main": "index.js",
   "repository": "https://github.com/Crownpeak/gatsby-source-crownpeak-dxm",

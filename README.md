@@ -99,6 +99,7 @@ Thanks to:
 | Version       | Date          | Changes                            |
 | ------------- | --------------|----------------------------------- |
 | 1.0.0         | 2021MAR15     | Initial Release.                   |
+| 1.1.0         | 2021MAR16     | Add support for incremental builds, bug fix. |
 
  
 ## License
