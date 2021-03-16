@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Gatsby Source Plugin for Crownpeak DXM.",
   "main": "index.js",
+  "repository": "https://github.com/Crownpeak/gatsby-source-crownpeak-dxm",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "echo \"No build script setup\""
