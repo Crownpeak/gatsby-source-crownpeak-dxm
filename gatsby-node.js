@@ -4,30 +4,32 @@ const fs = require('fs');
 const path = require('path');
 
 let contentTypesOptions = [];
-let pages = [];
 
-exports.createPages = async ({ graphql, actions }) => {
+exports.createPages = async ({ graphql, actions, getNodesByType }) => {
     const { createPage } = actions;
-    //console.log(`Creating pages`);
-    for (let page of pages) {
-        //console.log(`Page is of type ${page.type}`);
-        const contentType = contentTypesOptions.find(ct => ct.nodeType === page.type && ct.template);
-        if (contentType && page.slug) {
-            //console.log(`Creating page for ${page.slug}`);
-            createPage({
-                path: page.slug,
-                component: contentType.template,
-                context: {
-                    slug: page.slug,
-                    assetId: page.assetId,
-                },
+    //console.time(`Creating pages`);
+    contentTypesOptions.filter(ct => ct.template).forEach(ct => {
+        const nodes = getNodesByType(ct.nodeType);
+        //console.log(`Node type is ${ct.nodeType}, count is ${nodes.length}`);
+        if (nodes && nodes.length) {
+            nodes.filter(node => node.slug).forEach(node => {
+                //console.log(`Creating page for ${node.slug}`);
+                createPage({
+                    path: node.slug,
+                    component: ct.template,
+                    context: {
+                        slug: node.slug,
+                        assetId: node.assetid,
+                    },
+                });
             });
         }
-    }
+    });
+    //console.timeEnd(`Creating pages`);
 };
 
 exports.sourceNodes = async (
-        { actions, createContentDigest, createNodeId, getNodesByType },
+        { actions, cache, createContentDigest, createNodeId, getNodesByType },
         pluginOptions
     ) => {
     let contentLocation = pluginOptions.contentLocation;
@@ -45,29 +47,66 @@ exports.sourceNodes = async (
     if (contentLocation.slice(0, 2) === "//") contentLocation = "https:" + contentLocation;
     console.log(`gatsby-source-crownpeak-dxm is using content location '${contentLocation}'`)
 
-    const { createNode } = actions
+    const timestamp = await cache.get(`timestamp`);
+
+    const { createNode, deleteNode, touchNode } = actions
 
     contentTypesOptions = processContentTypeOptions(pluginOptions.contentTypes);
 
     let contentTypes = contentTypesOptions.map(ct => ct.name);
     if (!contentTypes || !contentTypes.length) {
         // Get all available content types
-        const typesUrl = `${contentLocation}&q=*:*&facet=true&facet.field=custom_s_type&facet.mincount=1&rows=0&echoParams=none&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
+        const typesUrl = `${contentLocation}&q=*:*&facet=true&facet.field=custom_s_type&facet.mincount=1&rows=0&echoParams=none&omitHeader=true&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
         //console.log(`DEBUG: querying ${typesUrl}`);
         const types = (await (await fetch(typesUrl)).json()).facet_counts.facet_fields.custom_s_type;
         contentTypes = types.filter((_type, i) => i % 2 === 0);
         contentTypesOptions = processContentTypeOptions(contentTypes);
     }
+    let cachedContent = [];
+    // touch nodes to ensure they aren't garbage collected
+    //console.time("Checking cached content");
+    contentTypes.forEach(type => getNodesByType(getNodeTypeFromContentType(type)).forEach(node => { 
+        // BUG: touchNode(node) should work here but is not stopping garbage collection
+        //touchNode(node);
+        // using delete node.internal.owner; createNode(node); seems to serve as a workaround
+        delete node.internal.owner; 
+        createNode(node); 
+        //console.log(`Touched node ${node.assetid}, ${node.internal.type}`);
+        cachedContent.push(node);
+    }));
+    //console.timeEnd("Checking cached content");
+    //console.log(`Found cached content ${cachedContent.map(node => node.assetid)}`);
 
-    // TODO: cache results and only query new data
-    // See https://www.gatsbyjs.com/docs/creating-a-source-plugin/
+    if (cachedContent.length) {
+        // Get a complete list of everything available
+        //console.time("Getting existing content ids");
+        const contentIds = await getExistingContent(contentLocation, pluginOptions, contentTypesOptions.map(type => type.name));
+        //console.timeEnd("Getting existing content ids");
+        //console.log(`Found existing content ${contentIds}`);
 
+        // Clear down any cached content that no longer exists
+        //console.time("Deleting old cached content");
+        cachedContent.forEach(node => {
+            const id = node.assetid;
+            //console.log(`Looking for ${id} in ${contentIds}`);
+            if (contentIds.indexOf(id) < 0) {
+                //console.log(`Deleting old cached content ${id}`);
+                deleteNode(node);
+            }
+        });
+        //console.timeEnd("Deleting old cached content");
+    }
+
+    //console.time("Loading new and modified content");
     for (let i = 0, len = contentTypes.length; i < len; i++) {
         const type = contentTypes[i];
         const nodeType = getNodeTypeFromContentType(type);
         //console.log(`Found type ${type}`);
 
-        const url = `${contentLocation}&q=custom_s_type:%22${type}%22&rows=1000&fl=id,custom_s_slug,custom_t_json:[json]&echoParams=none&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
+        let url = `${contentLocation}&q=custom_s_type:%22${type}%22&rows=10000&fl=id,slug:custom_s_slug,custom_t_json:[json]&echoParams=none&omitHeader=true&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
+        if (timestamp) {
+            url += `&fq=custom_dt_modified:[${new Date(timestamp).toISOString()}%20TO%20NOW]`;
+        }
         //console.log(`DEBUG: querying ${url}`);
         const response = await fetch(url);
         const json = await response.json();
@@ -82,34 +121,42 @@ exports.sourceNodes = async (
             }
 
             //console.log(`Creating node with type ${nodeType}`);
-            const slug = item.custom_s_slug;
             createNode({
                 ...json,
                 id: createNodeId(`${nodeType}-${item.id}`),
                 assetid: item.id,
                 parent: null,
                 children: [],
-                slug,
+                slug: item.slug,
                 internal: {
                     type: nodeType,
                     content: JSON.stringify(json),
                     contentDigest: createContentDigest(json),
                 },
             });
-
-            if (slug) {
-                // These will be used in createPages above
-                pages.push({
-                    type: nodeType,
-                    assetId: item.id,
-                    slug,
-                });
-            }
         });
     };
-    
+    //console.timeEnd("Loading new and modified content");
+    await cache.set(`timestamp`, Date.now());
+
     return;
 }
+
+const getExistingContent = async (contentLocation, pluginOptions, contentTypes) => {
+    const types = contentTypes.map(t => `%22${t}%22`);
+    const CHUNK_SIZE = 10000;
+    let start = 0;
+    let results = [];
+    while (true) {
+        const url = `${contentLocation}&q=custom_s_type:(${types.join("%20OR%20")})&rows=${CHUNK_SIZE}&start=${start}&fl=i:id&echoParams=none&omitHeader=true&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
+        //console.log(`Querying ${url}`);
+        const response = (await (await fetch(url)).json()).response;
+        if (!response || !response.numFound || !response.docs || !response.docs.length) break;
+        results.push(response.docs.map(doc => doc.i));
+        start += CHUNK_SIZE;
+    }
+    return [].concat(...results);
+};
 
 const getContentLocation = () => {
     const cwd = process.env.INIT_CWD || require('path').resolve('.');
