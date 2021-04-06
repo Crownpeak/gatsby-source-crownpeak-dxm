@@ -46,7 +46,15 @@ module.exports = {
         // if contentTypes is not specified, /src/templates will be checked for a matching template for each type
         // e.g. if the CMS content type is "Blog Page", /src/template/blogPage.js will be searched
         // Similarly if a template value is not provided in contentTypes, the folder will be searched
-        contentTypes: [{name: "Blog Page", template: "blog-template.js"}, "Content Page"]
+        contentTypes: [{name: "Blog Page", template: "blog-template.js"}, "Content Page"],
+
+        // previewMode will subscribe to content updates if set to true
+        previewMode: true,
+        // previewModeEndpoint must contain the endpoint URI for content subscription, if previewMode is used
+        previewModeEndpoint: "wss://endpoint-url-here",
+        // previewModeFolder can contain a folder id (or an array of folder ids) for subscription
+        // if previewModeFolder is not set, the value of CMS_SITE_ROOT from .env will be used
+        previewModeFolder: 12345
       },
     },
   ],
