@@ -117,8 +117,11 @@ exports.sourceNodes = async (
                         deleteNode(n);
                     });
                     break;
-                case "add":
                 case "update":
+                    // Wait a bit for the update to complete
+                    await sleep(6000);
+                    // And fall through
+                case "add":
                 default:
                     //console.log(`Adding/updating node with asset id ${content.id}`);
                     const url = `${contentLocation}&q=id:${content.id}&rows=1&fl=id,type:custom_s_type,slug:custom_s_slug,custom_t_json:[json]&echoParams=none&omitHeader=true&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
