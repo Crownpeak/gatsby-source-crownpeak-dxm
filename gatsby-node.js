@@ -105,7 +105,7 @@ exports.sourceNodes = async (
 
         let url = `${contentLocation}&q=custom_s_type:%22${type}%22&rows=10000&fl=id,slug:custom_s_slug,custom_t_json:[json]&echoParams=none&omitHeader=true&fq=${(pluginOptions.filterQueries || []).join("&fq=")}`;
         if (timestamp) {
-            url += `&fq=custom_dt_modified:[${new Date(timestamp).toISOString()}%20TO%20NOW]`;
+            url += `&fq=custom_dt_published:[${new Date(timestamp).toISOString()}%20TO%20NOW]`;
         }
         //console.log(`DEBUG: querying ${url}`);
         const response = await fetch(url);

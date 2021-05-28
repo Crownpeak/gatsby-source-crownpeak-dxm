@@ -108,8 +108,9 @@ Thanks to:
 | ------------- | --------------|----------------------------------- |
 | 1.0.0         | 2021MAR15     | Initial Release.                   |
 | 1.1.0         | 2021MAR16     | Add support for incremental builds, bug fix. |
+| 1.1.1         | 2021APR15     | Bug fix. |
 
- 
+
 ## License
 MIT License
 
