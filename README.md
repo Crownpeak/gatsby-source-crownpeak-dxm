@@ -16,6 +16,9 @@ a runtime NPM Package is provided. The purpose of this package is:
 * Making data models available to the Gatsby Application, which a developer can map against
     * **Dynamic Data** - Processing data from the DXM Dynamic Content API, using the Search G2 Raw JSON endpoint.
   
+## Gatsby Starter
+Use the <a href="https://github.com/Crownpeak/gatsby-starter-crownpeak-dxm" target="_blank">Gatsby Starter</a> to get going quickly!
+
 ## Install
 ```
 yarn add gatsby-source-crownpeak-dxm
@@ -86,6 +89,11 @@ Note that the `CmsPage` comment is required for the page parser to discover your
 If you are using the <a href="https://github.com/Crownpeak/DXM-SDK-Examples/tree/master/React" target="_blank">Crownpeak Digital Experience Management (DXM) Software Development Kit (SDK) for React</a>, content from any drop zones contained on a page is automatically serialised to a string. This is done so that it is not necessary to query the exact arrangement of nodes, since this cannot be known at build time.
 
 In your graphql query, simply add the `DropZones` node, and its contents will be automatically deserialised before use.
+
+## Videos & Tutorials
+Walk through of creating Crownpeak's Demo Site (Procam) from scratch, starting with an empty folder.
+<a href="https://www.youtube.com/watch?v=zSrNjHZKMNA" target="_blank">![Gatsby Source Plugin for Crownpeak DXM](./images/gatsby-source-plugin-for-crownpeak-dxm-title-frame.png?raw=true "Gatsby Source Plugin for Crownpeak DXM")</a>
+
 
 ---
 ## Credit
